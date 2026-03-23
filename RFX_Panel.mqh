@@ -321,7 +321,7 @@ bool CRFXPanel::Create(bool show_panel, int font_size, int magic_number, double 
 
    // --- Info Section ---
    y_offset += 42;
-   CreateRectLabel(N("info_bg"), px + 10, y_offset, pw - 20, 150, CLR_SECTION_BG, CLR_DIVIDER, 1);
+   CreateRectLabel(N("info_bg"), px + 10, y_offset, pw - 20, 170, CLR_SECTION_BG, CLR_DIVIDER, 1);
 
    int info_x = px + 20;
    int info_y = y_offset + 10;
@@ -337,6 +337,10 @@ bool CRFXPanel::Create(bool show_panel, int font_size, int magic_number, double 
 
    CreateLabel(N("lbl_sells"), info_x, info_y, "SELLS:", CLR_ACCENT_RED, m_font_size_value, m_font_bold);
    CreateLabel(N("val_sells"), info_x + 100, info_y, "0 (0.00 Lots)", CLR_VALUE_TEXT, m_font_size_normal);
+   info_y += line_h;
+
+   CreateLabel(N("lbl_nett"), info_x, info_y, "Nett Position:", CLR_LABEL_TEXT, m_font_size_small);
+   CreateLabel(N("val_nett"), info_x + 100, info_y, "0.00 FLAT", CLR_VALUE_TEXT, m_font_size_small);
    info_y += line_h;
 
    CreateLabel(N("lbl_profit_buy"), info_x, info_y, "Profit buys:", CLR_LABEL_TEXT, m_font_size_small);
@@ -355,7 +359,7 @@ bool CRFXPanel::Create(bool show_panel, int font_size, int magic_number, double 
    CreateLabel(N("val_dd"), info_x + 100, info_y, "0.00 %", CLR_DRAWDOWN_LOW, m_font_size_value, m_font_bold);
 
    // --- Close Buttons ---
-   y_offset += 160;
+   y_offset += 180;
    int btn_w = (pw - 40) / 2;
    CreateButton(N("btn_close_buy"), px + 15, y_offset, btn_w, 30, "Close Buy", CLR_BTN_BUY, CLR_WHITE, m_font_size_normal);
    CreateButton(N("btn_close_sell"), px + 20 + btn_w, y_offset, btn_w, 30, "Close Sell", CLR_BTN_SELL, CLR_WHITE, m_font_size_normal);
@@ -477,6 +481,23 @@ void CRFXPanel::Update()
    ObjectSetString(0, N("val_orders"), OBJPROP_TEXT, IntegerToString(total_orders));
    ObjectSetString(0, N("val_buys"), OBJPROP_TEXT, IntegerToString(buy_count) + " (" + DoubleToString(buy_lots, 2) + " Lots)");
    ObjectSetString(0, N("val_sells"), OBJPROP_TEXT, IntegerToString(sell_count) + " (" + DoubleToString(sell_lots, 2) + " Lots)");
+
+   // Nett position
+   double nett_lots = buy_lots - sell_lots;
+   string nett_direction = "FLAT";
+   color  nett_clr = CLR_VALUE_TEXT;
+   if(nett_lots > 0.0001)
+   {
+      nett_direction = "BUYS";
+      nett_clr = CLR_ACCENT_GREEN;
+   }
+   else if(nett_lots < -0.0001)
+   {
+      nett_direction = "SELLS";
+      nett_clr = CLR_ACCENT_RED;
+   }
+   ObjectSetString(0, N("val_nett"), OBJPROP_TEXT, DoubleToString(MathAbs(nett_lots), 2) + " " + nett_direction);
+   ObjectSetInteger(0, N("val_nett"), OBJPROP_COLOR, nett_clr);
 
    // Profit coloring
    ObjectSetString(0, N("val_profit_buy"), OBJPROP_TEXT, DoubleToString(buy_profit, 2));
