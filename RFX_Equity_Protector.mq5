@@ -317,6 +317,9 @@ int OnInit()
    // Parse magic numbers
    ParseMagicNumbers(inp_magic_numbers);
 
+   // Sync the panel's display/close filter with the protection filter
+   g_panel.SetFilter(inp_symbol_mode == SYMBOL_ALL, inp_magic_mode == MAGIC_ALL, g_magic_list);
+
    // Set magic number for trade operations
    g_trade.SetExpertMagicNumber(inp_magic_number);
 

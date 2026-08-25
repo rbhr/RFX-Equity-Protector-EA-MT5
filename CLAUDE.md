@@ -40,6 +40,7 @@ This EA is inspired by "AW Equity Protection MT5 1.20" but with a modernized UI.
 - Start/Stop work button
 - Real-time: order count, lots, profit per side, spread, drawdown %
 - Close Buy / Close Sell buttons
+- Position counts and Close Buy/Sell follow the EA's symbol/magic protection filter (synced via `CRFXPanel::SetFilter` in `OnInit`); the panel magic number only tags orders opened from the panel
 - Adjustable lot size with +/- buttons and manual edit
 - Buy/Sell market order buttons
 - Top-right corner: balance and equity display

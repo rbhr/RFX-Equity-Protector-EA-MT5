@@ -92,6 +92,11 @@ private:
    int               m_drag_offset_x;
    int               m_drag_offset_y;
 
+   // Display filter (mirrors the EA's protection filter)
+   bool              m_filter_all_symbols;
+   bool              m_filter_all_magics;
+   long              m_filter_magics[];
+
    // Helper methods
    void              CreateRectLabel(string name, int x, int y, int w, int h, color bg, color border, int border_width=0);
    void              CreateLabel(string name, int x, int y, string text, color clr, int size, string font="", ENUM_ANCHOR_POINT anchor=ANCHOR_LEFT_UPPER);
@@ -102,6 +107,8 @@ private:
    void              UpdateValues();
    void              UpdateDrawdownColor(double dd);
 
+   bool              FilterSymbol(const string symbol);
+   bool              FilterMagic(const long magic);
    int               CountPositions(int type, double &lots, double &profit);
    void              DeleteObjects();
 
@@ -121,6 +128,7 @@ public:
    bool              IsMinimized()              { return m_is_minimized; }
    double            GetOrderLots()             { return m_order_lots; }
    int               GetMagicNumber()           { return m_magic_number; }
+   void              SetFilter(const bool all_symbols, const bool all_magics, const long &magics[]);
 };
 
 //+------------------------------------------------------------------+
@@ -136,6 +144,10 @@ CRFXPanel::CRFXPanel()
    m_order_lots    = 0.01;
    m_prefix        = "RFX_";
    m_is_dragging   = false;
+
+   m_filter_all_symbols = false;
+   m_filter_all_magics  = true;
+   ArrayResize(m_filter_magics, 0);
 
    m_panel_x       = 20;
    m_panel_y       = 30;
@@ -248,6 +260,43 @@ void CRFXPanel::CreateEdit(string name, int x, int y, int w, int h, string text,
 }
 
 //+------------------------------------------------------------------+
+//| Set display filter (mirrors the EA's protection filter)          |
+//+------------------------------------------------------------------+
+void CRFXPanel::SetFilter(const bool all_symbols, const bool all_magics, const long &magics[])
+{
+   m_filter_all_symbols = all_symbols;
+   m_filter_all_magics  = all_magics;
+
+   int n = ArraySize(magics);
+   ArrayResize(m_filter_magics, n);
+   for(int i = 0; i < n; i++)
+      m_filter_magics[i] = magics[i];
+}
+
+//+------------------------------------------------------------------+
+//| Check if symbol passes the display filter                        |
+//+------------------------------------------------------------------+
+bool CRFXPanel::FilterSymbol(const string symbol)
+{
+   if(m_filter_all_symbols) return true;
+   return (symbol == _Symbol);
+}
+
+//+------------------------------------------------------------------+
+//| Check if magic number passes the display filter                  |
+//+------------------------------------------------------------------+
+bool CRFXPanel::FilterMagic(const long magic)
+{
+   if(m_filter_all_magics) return true;
+
+   for(int i = 0; i < ArraySize(m_filter_magics); i++)
+   {
+      if(m_filter_magics[i] == magic) return true;
+   }
+   return false;
+}
+
+//+------------------------------------------------------------------+
 //| Count positions by type                                          |
 //+------------------------------------------------------------------+
 int CRFXPanel::CountPositions(int type, double &lots, double &profit)
@@ -260,8 +309,8 @@ int CRFXPanel::CountPositions(int type, double &lots, double &profit)
    {
       if(m_position.SelectByIndex(i))
       {
-         if(m_position.Symbol() != _Symbol) continue;
-         if(m_magic_number > 0 && m_position.Magic() != m_magic_number) continue;
+         if(!FilterSymbol(m_position.Symbol())) continue;
+         if(!FilterMagic(m_position.Magic())) continue;
 
          if((type == POSITION_TYPE_BUY && m_position.PositionType() == POSITION_TYPE_BUY) ||
             (type == POSITION_TYPE_SELL && m_position.PositionType() == POSITION_TYPE_SELL))
@@ -604,8 +653,8 @@ void CRFXPanel::OnChartEvent(const int id, const long &lparam, const double &dpa
          {
             if(m_position.SelectByIndex(i))
             {
-               if(m_position.Symbol() != _Symbol) continue;
-               if(m_magic_number > 0 && m_position.Magic() != m_magic_number) continue;
+               if(!FilterSymbol(m_position.Symbol())) continue;
+               if(!FilterMagic(m_position.Magic())) continue;
                if(m_position.PositionType() == POSITION_TYPE_BUY)
                   m_trade.PositionClose(m_position.Ticket());
             }
@@ -621,8 +670,8 @@ void CRFXPanel::OnChartEvent(const int id, const long &lparam, const double &dpa
          {
             if(m_position.SelectByIndex(i))
             {
-               if(m_position.Symbol() != _Symbol) continue;
-               if(m_magic_number > 0 && m_position.Magic() != m_magic_number) continue;
+               if(!FilterSymbol(m_position.Symbol())) continue;
+               if(!FilterMagic(m_position.Magic())) continue;
                if(m_position.PositionType() == POSITION_TYPE_SELL)
                   m_trade.PositionClose(m_position.Ticket());
             }
